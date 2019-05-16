@@ -146,46 +146,6 @@ def pyrlbp_multiscale_simple(inputsig):
         pyrlbp_all = np.hstack((pyrlbp_all, lbp_mult_delta))
     return pyrlbp_all
 
-# # apply proc_fun on the median filtered filename col data
-# def extract_feature(proc_fun, indataset, outdataset, samp_index):
-#     #print('indataset and outdataset shape: {}, {}'.format(indataset.shape, outdataset.shape))
-#     xvec = indataset[samp_index,:,:]
-#     #print('Input to {}: {}'.format(proc_fun, xvec.shape))
-#     fea = proc_fun(xvec).reshape(-1,1)
-#     #print('feature calculated info: shape={}, median={}'.format(fea.shape, np.median(fea)))
-#     outdataset[samp_index,:,:] = fea
-#     return np.median(fea)
-
-# # create output HDF5 dataset and populates in parallel
-# # extract feature using function: extract_fea_mat
-# def parallel_feature_calc(settings, fea_proc_fun, columns=[], n_jobs=8):
-#     print("-- Opening training signal dataset {}".format(settings['TRAINX']))
-#     f_in = h5py.File(settings['TRAINX'], 'r')
-#     data_in = f_in[settings['DS_TRAINX']]
-
-#     # create output data set
-#     print("-- Creating output feature dataset in {}".format(settings['DS_TRAIN_FEATURES']))
-#     f_out = h5py.File(settings['TRAIN_FEATURES'], 'w')
-#     f_out.create_dataset(settings['DS_TRAIN_FEATURES'], (data_in.shape[0], FEA_DIM, 1))
-#     data_out = f_out[settings['DS_TRAIN_FEATURES']]
-    
-#     if len(columns) == 0:
-#         columns = np.arange(0, data_in.shape[0])
-#     col_ids = columns
-
-#     print('-- Parallel processing data matrix: {0}'.format(col_ids))
-#     st = time.time()
-
-#     #allProcessedOut = Parallel(n_jobs=n_jobs, verbose=8)(delayed(extract_feature)(proc_fun=pyrlbp_multiscale, indataset=data_in, outdataset=data_out, samp_index=ii) for ii in col_ids)
-#     allProcessedOut = [extract_feature(proc_fun=pyrlbp_multiscale, indataset=data_in, outdataset=data_out, samp_index=ii) for ii in col_ids]
-    
-#     outMat = np.asarray(allProcessedOut)
-#     f_in.close()
-#     f_out.close()
-#     et = time.time()
-#     print('- Total time calculating features {0} = {1:.2f} sec'.format(outMat.shape, et-st))
-#     return outMat
-
 # create output HDF5 dataset and populates in parallel
 # extract feature using function: extract_fea_mat
 def parallel_feature_calc(signal_list, n_jobs=8):

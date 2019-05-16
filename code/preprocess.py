@@ -10,12 +10,12 @@ import time
 TOTAL_TRAIN_LEN = 629145481
 settings_file = './settings.json'
 TEST_LEN = 150000
-STEP_SZ = 1000
-PARALLEL_PROC_SAMP_COUNT = 2207
-TRAIN_SAMPLE_COUNT = PARALLEL_PROC_SAMP_COUNT * 3 #int((TOTAL_TRAIN_LEN - TEST_LEN)/STEP_SZ) # = 628995 = 3 * 5 * 19 * 2207
+STEP_SZ = 5000
+PARALLEL_PROC_SAMP_COUNT = 390
+TRAIN_SAMPLE_COUNT = int((TOTAL_TRAIN_LEN - TEST_LEN)/STEP_SZ) # = 125970=390*N
 NJOBS_FEATURE = 20
 
-jd = json.JSONDecoder() 
+jd = json.JSONDecoder()
 settings = jd.decode(open(settings_file).read())
 
 chunk_reader = pd.read_csv(settings['TRAIN_CSV'], chunksize=STEP_SZ)
@@ -42,7 +42,7 @@ for chunk in chunk_reader:
     if len(curr_deque) == max_deq_len:
         # signal segment calculation
         x = np.asarray(curr_deque).flatten().reshape(-1,1)
-        y = chunk.iloc[-1,1]        
+        y = chunk.iloc[-1,1]
         signal_list.append(x)
         trainY[train_sigseg_index] = y
         curr_deque.popleft()
