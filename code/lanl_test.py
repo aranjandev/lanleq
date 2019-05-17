@@ -22,6 +22,9 @@ for f in fnames:
     df = pd.read_csv(f)
     sig = np.asarray(df.iloc[:,0]).reshape(-1,1)
     signal_list.append(sig.reshape(-1,1))
+    print('--- Done {} (list len = {})'.format(f, len(signal_list)))
 
 print('-- Parallel feature calculation for {} signals'.format(len(signal_list)))
 TestFeaMat = feautils.parallel_feature_calc(signal_list, n_jobs=NJOBS_FEATURE)
+np.save(settings['TEST_FEATURES'], TestFeaMat)
+print('-- Saved test features of size {} to {}'.format(TestFeaMat.shape, settings['TEST_FEATURES']))
