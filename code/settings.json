@@ -1,6 +1,6 @@
 {   "FEATURE_NJOBS": 20,
     "TEST_SIG_LEN": 150000,
-	"XGB_NTHREAD": 20,
+	"XGB_NTHREAD": 6,
 	"TRAIN_CSV": "../data/input/train.csv",
 	"TRAINX": "../data/input/train_X.hdf5",
 	"DS_TRAINX": "segments",

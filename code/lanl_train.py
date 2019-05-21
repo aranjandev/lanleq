@@ -11,8 +11,9 @@ import time
 # random seed for repeatability
 random.seed(0)
 np.random.seed(0)
-TRAINING_SAMPS = 0
+TRAINING_SAMPS = 70000
 GENERATE_LIBSVM = False #True
+USE_LIBSVM = GENERATE_LIBSVM or False
 LIBSVM_CACHE = './localdata/dtrain.cache'
 
 # set general training params
@@ -59,9 +60,23 @@ if GENERATE_LIBSVM:
     allX = []
     allY = []
 
-cache_train_data_path = settings['TRAINDATA_LIBSVM'] + '#' + LIBSVM_CACHE
-print('-- Loading cached data from {} '.format(cache_train_data_path))
-dtrain = xgb.DMatrix(cache_train_data_path)
+if USE_LIBSVM:
+    cache_train_data_path = settings['TRAINDATA_LIBSVM'] + '#' + LIBSVM_CACHE
+    print('-- Loading cached data from {} '.format(cache_train_data_path))
+    dtrain = xgb.DMatrix(cache_train_data_path)
+else:
+    # load precalculated training features
+    train_fea_dim = 6000
+    ftrain = h5py.File(settings['TRAIN_FEATURES_X'], 'r')
+    full_tr_count = ftrain[settings['DS_TRAIN_FEATURES']].shape[0]
+
+    if TRAINING_SAMPS == 0:
+        TRAINING_SAMPS = full_tr_count
+
+    allX = ftrain[settings['DS_TRAIN_FEATURES']][0:TRAINING_SAMPS, 0:train_fea_dim,:].reshape(-1,train_fea_dim)
+    allY = np.load(settings['TRAIN_FEATURES_Y'])[0:TRAINING_SAMPS, :]
+    dtrain = xgb.DMatrix(allX, allY)
+
 print('-- Loaded dtrain: {} x {}. Starting training...'.format(dtrain.num_row(), dtrain.num_col()))
 # training classifier
 starttime = time.time()
