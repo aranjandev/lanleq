@@ -11,8 +11,9 @@ import time
 # random seed for repeatability
 random.seed(0)
 np.random.seed(0)
-TRAINING_SAMPS = 70000
-GENERATE_LIBSVM = False #True
+TRAINING_SAMPS = 65000
+TRAINING_FEA_DIM = 24000 # feautils.FEA_DIM
+GENERATE_LIBSVM = True
 USE_LIBSVM = GENERATE_LIBSVM or False
 LIBSVM_CACHE = './localdata/dtrain.cache'
 
@@ -52,13 +53,16 @@ if GENERATE_LIBSVM:
     if TRAINING_SAMPS == 0:
         TRAINING_SAMPS = full_tr_count
 
-    allX = ftrain[settings['DS_TRAIN_FEATURES']][0:TRAINING_SAMPS,:,:].reshape(-1,feautils.FEA_DIM)
+    allX = ftrain[settings['DS_TRAIN_FEATURES']][0:TRAINING_SAMPS,0:TRAINING_FEA_DIM,:].reshape(-1,TRAINING_FEA_DIM)
     allY = np.load(settings['TRAIN_FEATURES_Y'])[0:TRAINING_SAMPS, :]
     print('-- Generating LIBSVM training data for {} in {}'.format(allX.shape, settings['TRAINDATA_LIBSVM']))
     import sklearn.datasets as skd
+    starttime=time.time()
     skd.dump_svmlight_file(allX, allY.ravel(), settings['TRAINDATA_LIBSVM'])
     allX = []
     allY = []
+    endtime=time.time()
+    print('-- Dumped LIBSVM data file in {:.2f} sec'.format(endtime-starttime))
 
 if USE_LIBSVM:
     cache_train_data_path = settings['TRAINDATA_LIBSVM'] + '#' + LIBSVM_CACHE
@@ -66,14 +70,13 @@ if USE_LIBSVM:
     dtrain = xgb.DMatrix(cache_train_data_path)
 else:
     # load precalculated training features
-    train_fea_dim = 6000
     ftrain = h5py.File(settings['TRAIN_FEATURES_X'], 'r')
     full_tr_count = ftrain[settings['DS_TRAIN_FEATURES']].shape[0]
 
     if TRAINING_SAMPS == 0:
         TRAINING_SAMPS = full_tr_count
 
-    allX = ftrain[settings['DS_TRAIN_FEATURES']][0:TRAINING_SAMPS, 0:train_fea_dim,:].reshape(-1,train_fea_dim)
+    allX = ftrain[settings['DS_TRAIN_FEATURES']][0:TRAINING_SAMPS, 0:TRAINING_FEA_DIM,:].reshape(-1,TRAINING_FEA_DIM)
     allY = np.load(settings['TRAIN_FEATURES_Y'])[0:TRAINING_SAMPS, :]
     dtrain = xgb.DMatrix(allX, allY)
 
