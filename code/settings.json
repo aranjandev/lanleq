@@ -1,6 +1,6 @@
 {   "FEATURE_NJOBS": 20,
     "TEST_SIG_LEN": 150000,
-	"XGB_NTHREAD": 6,
+	"XGB_NTHREAD": 24,
 	"TRAIN_CSV": "../data/input/train.csv",
 	"TRAINX": "../data/input/train_X.hdf5",
 	"DS_TRAINX": "segments",
@@ -13,7 +13,7 @@
 	"DS_TRAIN_FEATURES": "features",
 	"TESTX": "../data/input/test/",
 	"TEST_FEATURES": "../data/processed/test-features.npy",
-	"TMP_OUTPUT": "../data/processed/",
-	"SUBMISSION": "../data/submission/submission_result.csv",
+	"TMP_OUTPUT": "./localdata/",
+	"SUBMISSION_FOLDER": "../data/submission/",
 	"SAVED_MODEL": "../data/submission/saved_model.npy"
 }
