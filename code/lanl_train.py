@@ -12,31 +12,35 @@ import logging
 # random seed for repeatability
 random.seed(0)
 np.random.seed(0)
-TRAINING_SAMPS = 20000
+TRAINING_SAMPS = 0
 TRAINING_FEA_DIM = feautils.FEA_DIM
 GENERATE_LIBSVM = False
-USE_LIBSVM = False #True
+USE_LIBSVM = True
 EVAL_FRAC = 0.2
-EVAL_STEP = 50
-CV_COUNT = 2
+EVAL_STEP = 100
+CV_COUNT = 1
 CALLBACK_SAVE_ITER = EVAL_STEP
-
 
 # set general training params
 train_params = {
-    'N_ROUND': 500, # number of learners
+    'N_ROUND': 8000, # number of learners
 }
 
 jd = json.JSONDecoder()
 settings = jd.decode(open('settings.json').read())
+starttime_str = dt.datetime.strftime(dt.datetime.now(), '%d%m%y%H%M%S')
+
+# some globals for saving best models
+g_best_val_model_file = settings['TMP_OUTPUT'] + 'best-val-model-' + starttime_str + '.npy'
+g_val_best_error = 1e5
 
 # configure logger
-logging.basicConfig(filename=settings['TMP_OUTPUT']+'run.log',level=logging.DEBUG, filemode='w')
+logging.basicConfig(filename=settings['TMP_OUTPUT'] + 'run-' + starttime_str + '.log', level=logging.DEBUG, filemode='w')
 
 # set xgb params
 xgb_params = {'nthread': settings['XGB_NTHREAD'],
-              'max_depth': 6,
-              'eta': 0.01,
+              'max_depth': 8,
+              'eta': 0.001,
               'gamma': 0.1,
               'lambda': 0.1,
               'min_child_weight': 1,
@@ -47,12 +51,26 @@ xgb_params = {'nthread': settings['XGB_NTHREAD'],
               'silent': 1
               }
 
+# save the best classifier so far
+def callback_save_bestsofar(env):
+    global g_val_best_error, g_best_val_model_file
+    err = env.evaluation_result_list[0][1]
+    if env.iteration % CALLBACK_SAVE_ITER == 0:
+        if err < g_val_best_error:
+            np.save(g_best_val_model_file, [env.model, env.iteration, err])
+            g_val_best_error = err
+            print('-- Saved best model w err: {:.2f} to {}'.format(g_val_best_error, g_best_val_model_file))
+
 def run_train(settings, xgb_params, TRAINING_SAMPS):
     # set up the original training data
     ftrain = h5py.File(settings['TRAIN_FEATURES_X'], 'r')
     full_tr_count = ftrain[settings['DS_TRAIN_FEATURES']].shape[0]
     if TRAINING_SAMPS == 0:
         TRAINING_SAMPS = full_tr_count
+
+    # reset global val error
+    global g_val_best_error 
+    g_val_best_error = 1e5
 
     saved_model_file = settings['SUBMISSION_FOLDER'] + 'model-' + dt.datetime.strftime(dt.datetime.now(), '%d%m%y%H%M%S') + '.npy'
 
@@ -113,7 +131,8 @@ def run_train(settings, xgb_params, TRAINING_SAMPS):
     else:
         watchlist = [(dtrain,'train')]
         evals_result = {}
-    best_classifier = xgb.train(xgb_params, dtrain, train_params['N_ROUND'], watchlist, evals_result=evals_result, verbose_eval=EVAL_STEP)
+    #best_classifier = xgb.train(xgb_params, dtrain, train_params['N_ROUND'], watchlist, evals_result=evals_result, verbose_eval=EVAL_STEP)
+    best_classifier = xgb.train(xgb_params, dtrain, train_params['N_ROUND'], watchlist, evals_result=evals_result, verbose_eval=EVAL_STEP, callbacks=[callback_save_bestsofar])
 
     endtime = time.time()
     elapsed_sec = endtime - starttime
